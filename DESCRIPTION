@@ -1,0 +1,16 @@
+Package: scsave
+Type: Package
+Title: Reading and Writing Single-Cell Data
+Version: 0.1.1
+Author: MyeloidSol
+Maintainer: MyeloidSol <yourself@somewhere.net>
+Description: A format for writing and reading single-cell data to and and disk.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.2.3
+Imports:
+    Matrix,
+    Seurat,
+    SeuratObject,
+    arrow

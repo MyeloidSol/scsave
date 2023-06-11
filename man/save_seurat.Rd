@@ -7,6 +7,7 @@
 save_seurat(
   sobj,
   dir_path = getwd(),
+  name = "scdata",
   compression = "lz4",
   compression_level = NULL
 )
@@ -15,6 +16,8 @@ save_seurat(
 \item{sobj}{A Seurat object}
 
 \item{dir_path}{A file path to a directory}
+
+\item{name}{The name of the file that will contain the data}
 
 \item{compression}{The type of compression to use, default is "zstd"}
 

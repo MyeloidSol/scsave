@@ -46,7 +46,7 @@ create_assayv5 <- function(assay_data) {
 #'
 #' @return Outputs a folder with the file path specified
 #' @export
-save_seurat <- function(sobj, dir_path, compression = "lz4", compression_level = NULL) {
+save_seurat <- function(sobj, dir_path = getwd(), compression = "lz4", compression_level = NULL) {
   # Update dir_path
   dir_path <- paste(dir_path, "scdata", sep = '/')
 
@@ -145,11 +145,12 @@ load_seurat <- function(dir_path) {
   }
 
   ### Metadata ----
+  message("Reading in cell metadata...")
   subdir_path <- paste(dir_path, "cell_metadata", sep = '/') # Path to current sub directory
 
   # Check if cell_metadata folder exists
   if (!file.exists(subdir_path)) {
-    stop("Cell metadata does not exist!\nAll Seurat objects should have cell metadata written out with save_seurat()")
+    stop("Cell metadata directory does not exist!")
   }
 
   # Read cell metadata
@@ -160,11 +161,12 @@ load_seurat <- function(dir_path) {
   cell_metadata$cell_names <- NULL
 
   ### Assays ----
+  message("Reading in assays...")
   subdir_path <- paste(dir_path, "assays", sep='/')
 
   # Check if assays folder exists !!
   if (!file.exists(subdir_path)) {
-    stop("Assays folder does not exist!")
+    stop("Assays directory does not exist!")
   }
 
   # Create list to add data to
@@ -191,6 +193,7 @@ load_seurat <- function(dir_path) {
   }
 
   ### Create Seurat Object ----
+  message("Generating Seurat object...")
   # Initialize with first assay
   sobj <- Seurat::CreateSeuratObject(create_assayv5(tmp[[1]]), assay = names(tmp)[1])
   tmp[[1]] <- NULL; gc() # Free up space

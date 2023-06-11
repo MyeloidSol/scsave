@@ -54,7 +54,6 @@ save_seurat <- function(sobj, dir_path = getwd(), name= "scdata", compression = 
   # Create main folder
   make_dir(dir_path)
 
-
   ### Metadata ----
   message("Writing out cell metadata...")
   subdir_path <- paste(dir_path, "cell_metadata", sep = '/') # Path to current sub directory

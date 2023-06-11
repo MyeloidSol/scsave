@@ -4,7 +4,12 @@
 \alias{save_seurat}
 \title{Save Seurat Object}
 \usage{
-save_seurat(sobj, dir_path = "", compression = "lz4", compression_level = NULL)
+save_seurat(
+  sobj,
+  dir_path = getwd(),
+  compression = "lz4",
+  compression_level = NULL
+)
 }
 \arguments{
 \item{sobj}{A Seurat object}

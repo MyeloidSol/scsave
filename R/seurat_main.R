@@ -41,14 +41,15 @@ create_assayv5 <- function(assay_data) {
 #' Save a Seurat object to a directory
 #' @param sobj A Seurat object
 #' @param dir_path A file path to a directory
+#' @param name The name of the file that will contain the data
 #' @param compression The type of compression to use, default is "zstd"
 #' @param compression_level If compression "zstd" is specified, the level of compression may also be specified
 #'
 #' @return Outputs a folder with the file path specified
 #' @export
-save_seurat <- function(sobj, dir_path = getwd(), compression = "lz4", compression_level = NULL) {
+save_seurat <- function(sobj, dir_path = getwd(), name= "scdata", compression = "lz4", compression_level = NULL) {
   # Update dir_path
-  dir_path <- paste(dir_path, "scdata", sep = '/')
+  dir_path <- paste(dir_path, name, sep = '/')
 
   # Create main folder
   make_dir(dir_path)
@@ -201,7 +202,7 @@ load_seurat <- function(dir_path) {
   # Add cell metadata
   sobj[[]] <- cell_metadata
 
-  # Add other assays
+  # Add other assays(if there are others)
   if (length(tmp) != 0) {
     for (assay in names(tmp)) {
       sobj[[assay]] <- create_assayv5(tmp[[1]])

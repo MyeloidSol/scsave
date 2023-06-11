@@ -1,5 +1,6 @@
 # UTILITY FUNCTIONS ----
-# These are functions that a user would not directly interact with, however are used internally by the main functions
+# These are functions that are used to read and write the feather files,
+# as well as other functions not specific to SingleCellExperiment, Seurat, or AnnData objects
 
 
 ## MISC ----

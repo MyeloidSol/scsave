@@ -55,14 +55,26 @@ save_seurat <- function(sobj, dir_path = getwd(), name= "scdata", compression = 
   make_dir(dir_path)
 
   ### Metadata ----
-  message("Writing out cell metadata...")
+  message("Writing out metadata...")
+  # Cell metadata
   subdir_path <- paste(dir_path, "cell_metadata", sep = '/') # Path to current sub directory
 
-  # Create metadata directory
+  # Create cell metadata directory
   make_dir(subdir_path)
 
   # Write out cell metadata
   write_dataframe(sobj[[]], path = subdir_path, name_of_rows = "cell_names")
+
+  # Variable features
+  if (!is.null(VariableFeatures(sobj))) { # If they exist
+    subdir_path <- paste(dir_path, "variable_features", sep = '/') # Path to current sub directory
+
+    # Create variable features directory
+    make_dir(subdir_path)
+
+    # Write out variable features as a dataframe
+    write_dataframe(data.frame(variable_features = Seurat::VariableFeatures(sobj)), path = subdir_path)
+  }
 
 
   ### Assays ----
@@ -160,6 +172,18 @@ load_seurat <- function(dir_path) {
   rownames(cell_metadata) <- cell_metadata$cell_names
   cell_metadata$cell_names <- NULL
 
+
+  # Variable features
+  subdir_path <- paste(dir_path, "variable_features", sep = '/')
+
+  variable_features <- NULL
+  if (file.exists(subdir_path)) { # Load if it exists
+    variable_features <- load_feather(subdir_path)
+
+    variable_features <- variable_features$variable_features # Return as vector of strings
+  }
+
+
   ### Assays ----
   message("Reading in assays...")
   subdir_path <- paste(dir_path, "assays", sep='/')
@@ -200,6 +224,9 @@ load_seurat <- function(dir_path) {
 
   # Add cell metadata
   sobj[[]] <- cell_metadata
+
+  # Add variable features
+  Seurat::VariableFeatures(sobj) <- variable_features
 
   # Add other assays(if there are others)
   if (length(tmp) != 0) {

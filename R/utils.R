@@ -281,10 +281,6 @@ load_feather <- function(path) {
       colnames <- arrow::read_feather(paste(path, "colnames", sep='/'))$colnames
       rownames <- arrow::read_feather(paste(path, "rownames", sep='/'))$rownames
 
-      # Load dimension names
-      colnames <- arrow::read_feather(paste(path, "colnames", sep='/'))$colnames
-      rownames <- arrow::read_feather(paste(path, "rownames", sep='/'))$rownames
-
       # Create dense matrix
       obj <- matrix(data = obj$data, length(rownames), length(colnames), dimnames = list(rownames, colnames))
 

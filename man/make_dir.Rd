@@ -10,6 +10,5 @@ make_dir(fp)
 \item{fp}{File path}
 }
 \description{
-Creates or overwrites a directory depending if it
-already exists or not
+Creates or overwrites a directory depending if it already exists or not
 }

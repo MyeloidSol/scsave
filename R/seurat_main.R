@@ -138,6 +138,54 @@ save_seurat <- function(sobj, dir_path = getwd(), name= "scdata", compression = 
     }
   }
 
+
+  ### Dimension Reductions ----
+  reduc_names <- Seurat::Reductions(sobj)
+
+  if (!is.null(reduc_names)) { # Save if it exists
+    message("Writing out reductions...")
+    subdir_path <- paste(dir_path, "reductions", sep = '/') # Path to current sub directory
+
+    # Create reductions directory
+    make_dir(subdir_path)
+
+    for (reduc in reduc_names) { # Iterate through all reductions
+      # Path to current reduction
+      reduc_path <- paste(subdir_path, reduc, sep ='/')
+
+      # Create folder
+      make_dir(reduc_path)
+
+      # Grab reduction
+      data <- sobj[[reduc]]
+
+
+      # Path to cell embeddings
+      embeddings_path <- paste(reduc_path, "embeddings", sep = '/')
+
+      # Create folder
+      make_dir(embeddings_path)
+
+      # Write out cell embeddings
+      write_dense_float(Seurat::Embeddings(data), embeddings_path)
+
+
+      # Write out feature loadings(if they exist)
+      if (length(Seurat::Loadings(data)) != 0) {
+        # Path to feature loadings
+        loadings_path <- paste(reduc_path, "loadings", sep = '/')
+
+        # Create folder
+        make_dir(loadings_path)
+
+        # Write out feature loadings
+        write_dense_float(Seurat::Loadings(data), loadings_path)
+      }
+
+    }
+
+  }
+
 }
 
 
@@ -160,7 +208,7 @@ load_seurat <- function(dir_path) {
   message("Reading in cell metadata...")
   subdir_path <- paste(dir_path, "cell_metadata", sep = '/') # Path to current sub directory
 
-  # Check if cell_metadata folder exists
+  # Check if cell_metadata folder exists !!
   if (!file.exists(subdir_path)) {
     stop("Cell metadata directory does not exist!")
   }
@@ -194,7 +242,7 @@ load_seurat <- function(dir_path) {
   }
 
   # Create list to add data to
-  tmp <- list()
+  assay_tmp <- list()
 
   # Grab assay names
   assay_names <- list.files(subdir_path)
@@ -212,15 +260,55 @@ load_seurat <- function(dir_path) {
       data <- load_feather(layer_path)
 
       # Append data to list
-      tmp[[assay]][[layer]] <- data
+      assay_tmp[[assay]][[layer]] <- data
     }
   }
+
+
+  ### Dimension Reductions ----
+  subdir_path <- paste(dir_path, "reductions", sep='/') # Path to current sub directory
+
+  if (file.exists(subdir_path)) {
+    message("Reading in reductions...")
+
+    # Create list to add data to
+    reduc_tmp <- list()
+
+    # Grab reduction names
+    reduc_names <- list.files(subdir_path)
+    for (reduc in reduc_names) { # Iterate through all reductions
+      # Path to current reduction
+      reduc_path <- paste(subdir_path, reduc, sep ='/')
+
+      # Path to cell embeddings
+      embeddings_path <- paste(reduc_path, "embeddings", sep = '/')
+
+      # Check if cell embeddings exist !!
+      if (!file.exists(embeddings_path)) {
+        stop("Cell embeddings do not exist for: ", reduc, " reduction!")
+      }
+
+      # Grab cell embeddings
+      reduc_tmp[[reduc]]$embeddings <- load_feather(embeddings_path)
+
+      # Path to feature loadings
+      loadings_path <- paste(reduc_path, "loadings", sep = '/')
+
+      loadings <- NULL
+      # Check if feature loadings exists
+      if (file.exists(loadings_path)) {
+        reduc_tmp[[reduc]]$loadings <- load_feather(loadings_path)
+      }
+
+    }
+  }
+
 
   ### Create Seurat Object ----
   message("Generating Seurat object...")
   # Initialize with first assay
-  sobj <- Seurat::CreateSeuratObject(create_assayv5(tmp[[1]]), assay = names(tmp)[1])
-  tmp[[1]] <- NULL; gc() # Free up space
+  sobj <- Seurat::CreateSeuratObject(create_assayv5(assay_tmp[[1]]), assay = names(assay_tmp)[1])
+  assay_tmp[[1]] <- NULL; gc() # Free up space
 
   # Add cell metadata
   sobj[[]] <- cell_metadata
@@ -229,11 +317,25 @@ load_seurat <- function(dir_path) {
   Seurat::VariableFeatures(sobj) <- variable_features
 
   # Add other assays(if there are others)
-  if (length(tmp) != 0) {
-    for (assay in names(tmp)) {
-      sobj[[assay]] <- create_assayv5(tmp[[1]])
-      tmp[[1]] <- NULL; gc() # Free up space
+  if (length(assay_tmp) != 0) {
+    for (assay in names(assay_tmp)) {
+      sobj[[assay]] <- create_assayv5(assay_tmp[[1]])
+      assay_tmp[[1]] <- NULL; gc() # Free up space
     }
+  }
+
+
+  # Add dimension reductions(if there are any)
+  if (length(reduc_tmp) != 0) {
+
+    for (reduc in names(reduc_tmp)) {
+      # Slot dimension reduced object
+      sobj[[reduc]] <- Seurat::CreateDimReducObject(embeddings = reduc_tmp[[reduc]]$embeddings,
+                                                    loadings = reduc_tmp[[reduc]]$loadings,
+                                                    assay = Seurat::Assays(sobj)[1]) # Use first assay by default
+    }
+
+
   }
 
   return(sobj)

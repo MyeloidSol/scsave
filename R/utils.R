@@ -5,8 +5,7 @@
 ## MISC ----
 #' Make Directory
 #'
-#' Creates or overwrites a directory depending if it
-#' already exists or not
+#' Creates or overwrites a directory depending if it already exists or not
 #'
 #' @param fp File path
 make_dir <- function(fp) {

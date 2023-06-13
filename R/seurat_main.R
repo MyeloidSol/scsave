@@ -294,7 +294,7 @@ load_seurat <- function(dir_path) {
       # Path to feature loadings
       loadings_path <- paste(reduc_path, "loadings", sep = '/')
 
-      loadings <- NULL
+      reduc_tmp[[reduc]]$loadings <- new(Class = "matrix")
       # Check if feature loadings exists
       if (file.exists(loadings_path)) {
         reduc_tmp[[reduc]]$loadings <- load_feather(loadings_path)
@@ -323,7 +323,6 @@ load_seurat <- function(dir_path) {
       assay_tmp[[1]] <- NULL; gc() # Free up space
     }
   }
-
 
   # Add dimension reductions(if there are any)
   if (length(reduc_tmp) != 0) {

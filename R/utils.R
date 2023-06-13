@@ -35,7 +35,7 @@ make_dir <- function(fp) {
 write_sparse_int <- function(mat, path, compression = "lz4", compression_level = NULL) {
   # Check for correct sparse matrix type !!
   if (class(mat) != "dgTMatrix") {
-    message("Converting matrix of class ", class(mat), " to dgTMatrix(AKA a COOrdinate Matrix)")
+    #message("Converting matrix of class ", class(mat), " to dgTMatrix(AKA a COOrdinate Matrix)")
 
     mat <- as(mat, "TsparseMatrix")
   }
@@ -80,7 +80,7 @@ write_sparse_int <- function(mat, path, compression = "lz4", compression_level =
 write_sparse_float <- function(mat, path, compression = "lz4",  compression_level = NULL) {
   # Check for correct sparse matrix type !!
   if (class(mat) != "dgTMatrix") {
-    message("Converting matrix of class ", class(mat), " to dgTMatrix(AKA a COOrdinate Matrix)")
+    #message("Converting matrix of class ", class(mat), " to dgTMatrix(AKA a COOrdinate Matrix)")
 
     mat <- as(mat, "TsparseMatrix")
   }

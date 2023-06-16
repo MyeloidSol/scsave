@@ -268,11 +268,11 @@ load_seurat <- function(dir_path) {
   ### Dimension Reductions ----
   subdir_path <- paste(dir_path, "reductions", sep='/') # Path to current sub directory
 
+  # Create list to add data to
+  reduc_tmp <- list()
+
   if (file.exists(subdir_path)) {
     message("Reading in reductions...")
-
-    # Create list to add data to
-    reduc_tmp <- list()
 
     # Grab reduction names
     reduc_names <- list.files(subdir_path)

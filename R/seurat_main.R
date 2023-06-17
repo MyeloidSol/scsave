@@ -66,7 +66,7 @@ save_seurat <- function(sobj, dir_path = getwd(), name= "scdata", compression = 
   write_dataframe(sobj[[]], path = subdir_path, name_of_rows = "cell_names")
 
   # Variable features
-  if (!is.null(VariableFeatures(sobj))) { # If they exist
+  if (!is.null(Seurat::VariableFeatures(sobj))) { # If they exist
     subdir_path <- paste(dir_path, "variable_features", sep = '/') # Path to current sub directory
 
     # Create variable features directory
@@ -205,7 +205,7 @@ load_seurat <- function(dir_path) {
   }
 
   ### Metadata ----
-  message("Reading in cell metadata...")
+  message("Reading in metadata...")
   subdir_path <- paste(dir_path, "cell_metadata", sep = '/') # Path to current sub directory
 
   # Check if cell_metadata folder exists !!

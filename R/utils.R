@@ -235,6 +235,7 @@ write_dataframe <- function(df, path, name_of_rows = "rownames", compression = "
 #' its metadata, and return the recreated the object
 #'
 #' @param path File path
+#' @export
 load_feather <- function(path) {
   # Check if object file exists !!
   if (!file.exists(paste(path, 'x', sep ='/'))) {
@@ -268,7 +269,8 @@ load_feather <- function(path) {
       # Create sparse matrix
       obj <- as.data.frame(obj)
       obj <- Matrix::sparseMatrix(x = obj$data, i = obj$i_index, j = obj$j_index,
-                                  dimnames = list(rownames, colnames), index1 = FALSE)
+                                  dimnames = list(rownames, colnames), dims = c(length(rownames), length(colnames)),
+                                  index1 = FALSE)
 
       return(obj)
     }
@@ -281,7 +283,8 @@ load_feather <- function(path) {
       rownames <- arrow::read_feather(paste(path, "rownames", sep='/'))$rownames
 
       # Create dense matrix
-      obj <- matrix(data = obj$data, length(rownames), length(colnames), dimnames = list(rownames, colnames))
+      obj <- matrix(data = obj$data, nrow = length(rownames), ncol = length(colnames),
+                    dimnames = list(rownames, colnames))
 
       return(obj)
     }

@@ -56,7 +56,7 @@ save_seurat <- function(sobj, dir_path = getwd(), name= "scdata", compression = 
 
   ### Metadata ----
   message("Writing out metadata...")
-  # Cell metadata
+  #### Cell Metadata ----
   subdir_path <- paste(dir_path, "cell_metadata", sep = '/') # Path to current sub directory
 
   # Create cell metadata directory
@@ -65,7 +65,7 @@ save_seurat <- function(sobj, dir_path = getwd(), name= "scdata", compression = 
   # Write out cell metadata
   write_dataframe(sobj[[]], path = subdir_path, name_of_rows = "cell_names")
 
-  # Variable features
+  #### Variable Features ----
   if (!is.null(Seurat::VariableFeatures(sobj))) { # If they exist
     subdir_path <- paste(dir_path, "variable_features", sep = '/') # Path to current sub directory
 
@@ -84,6 +84,7 @@ save_seurat <- function(sobj, dir_path = getwd(), name= "scdata", compression = 
   # Create assays directory
   make_dir(subdir_path)
 
+  #### Assay Data ----
   assay_names <- SeuratObject::Assays(sobj) # Grab assay names
   for (assay in assay_names) { # Iterate over all assays
     # Path to current assay
@@ -94,7 +95,7 @@ save_seurat <- function(sobj, dir_path = getwd(), name= "scdata", compression = 
 
     # Grab layer names
     layer_names <- SeuratObject::Layers(sobj[[assay]])
-    for (layer in layer_names) {# Iterate over all layers in an assay
+    for (layer in layer_names) { # Iterate over all layers in an assay
       # Path to current layer
       layer_path <- paste(assay_path, layer, sep ='/')
 
@@ -136,6 +137,15 @@ save_seurat <- function(sobj, dir_path = getwd(), name= "scdata", compression = 
       }
 
     }
+
+    #### Assay Metadata ----
+    # Create folder for assay metadata
+    make_dir(paste(assay_path, "assay_metadata", sep ='/'))
+
+    # Write assay metadata
+    write_dataframe(df = sobj[[assay]]@meta.data, path = paste(assay_path, "assay_metadata", sep ='/'),
+                    compression = compression, compression_level = compression_level)
+
   }
 
 
@@ -206,6 +216,8 @@ load_seurat <- function(dir_path) {
 
   ### Metadata ----
   message("Reading in metadata...")
+
+  #### Cell Metadata ----
   subdir_path <- paste(dir_path, "cell_metadata", sep = '/') # Path to current sub directory
 
   # Check if cell_metadata folder exists !!
@@ -221,7 +233,7 @@ load_seurat <- function(dir_path) {
   cell_metadata$cell_names <- NULL
 
 
-  # Variable features
+  #### Variable Features ----
   subdir_path <- paste(dir_path, "variable_features", sep = '/')
 
   variable_features <- NULL
@@ -243,15 +255,20 @@ load_seurat <- function(dir_path) {
 
   # Create list to add data to
   assay_tmp <- list()
+  assay_md_tmp <- list()
 
   # Grab assay names
   assay_names <- list.files(subdir_path)
+
   for (assay in assay_names) { # Iterate over all assays
     # Path to current assay
     assay_path <- paste(subdir_path, assay, sep ='/')
 
+
+    #### Assay Data ----
     # Grab layer names
     layer_names <- list.files(assay_path)
+    layer_names <- layer_names[layer_names != "assay_metadata"] # Remove assay_metadata
     for (layer in layer_names) { # Iterate over all layers in an assay
       # Path to current layer
       layer_path <- paste(assay_path, layer, sep ='/')
@@ -262,6 +279,13 @@ load_seurat <- function(dir_path) {
       # Append data to list
       assay_tmp[[assay]][[layer]] <- data
     }
+
+    #### Assay Metadata ----
+    # Load metadata
+    data <- load_feather(paste(assay_path, "assay_metadata", sep = '/'))
+
+    # Append metadata to list
+    assay_md_tmp[[assay]] <- data
   }
 
 
@@ -308,7 +332,10 @@ load_seurat <- function(dir_path) {
   message("Generating Seurat object...")
   # Initialize with first assay
   sobj <- Seurat::CreateSeuratObject(create_assayv5(assay_tmp[[1]]), assay = names(assay_tmp)[1])
+  sobj[[names(assay_tmp)[1]]]@meta.data <- assay_md_tmp[[1]]
+
   assay_tmp[[1]] <- NULL; gc() # Free up space
+  assay_md_tmp[[1]] <- NULL; gc() # Free up space
 
   # Add cell metadata
   sobj[[]] <- cell_metadata
@@ -321,6 +348,9 @@ load_seurat <- function(dir_path) {
     for (assay in names(assay_tmp)) {
       sobj[[assay]] <- create_assayv5(assay_tmp[[1]])
       assay_tmp[[1]] <- NULL; gc() # Free up space
+
+      sobj[[assay]]@meta.data <- assay_md_tmp[[1]]
+      assay_md_tmp[[1]] <- NULL; gc() # Free up space
     }
   }
 

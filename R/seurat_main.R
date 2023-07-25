@@ -65,17 +65,6 @@ save_seurat <- function(sobj, dir_path = getwd(), name= "scdata", compression = 
   # Write out cell metadata
   write_dataframe(sobj[[]], path = subdir_path, name_of_rows = "cell_names")
 
-  #### Variable Features ----
-  if (!is.null(Seurat::VariableFeatures(sobj))) { # If they exist
-    subdir_path <- paste(dir_path, "variable_features", sep = '/') # Path to current sub directory
-
-    # Create variable features directory
-    make_dir(subdir_path)
-
-    # Write out variable features as a dataframe
-    write_dataframe(data.frame(variable_features = Seurat::VariableFeatures(sobj)), path = subdir_path)
-  }
-
 
   ### Assays ----
   message("Writing out assays...")
@@ -110,24 +99,28 @@ save_seurat <- function(sobj, dir_path = getwd(), name= "scdata", compression = 
 
         # Float elements(just checks first 100)
         if(any(data@x[1:100] %% 1 != 0)) {
-          write_sparse_float(data, path = layer_path, compression, compression_level)
+          write_sparse_float(data, path = layer_path,
+                             compression, compression_level)
         }
 
         # Integer elements(just checks first 100)
         else if (all(data@x[1:100] %% 1 == 0)) {
-          write_sparse_int(data, path = layer_path, compression, compression_level)
+          write_sparse_int(data, path = layer_path,
+                           compression, compression_level)
         }
       }
 
       else if (setequal(class(data), c("matrix", "array"))) { # Dense matrix
         # Float elements(just checks first 100)
         if(any(data[1:100] %% 1 != 0)) {
-          write_dense_float(data, path = layer_path, compression, compression_level)
+          write_dense_float(data, path = layer_path,
+                            compression, compression_level)
         }
 
         # Integer elements(just checks first 100)
         else if (all(data[1:100] %% 1 == 0)) {
-          write_dense_int(data, path = layer_path, compression, compression_level)
+          write_dense_int(data, path = layer_path,
+                          compression, compression_level)
         }
 
       }
@@ -144,7 +137,7 @@ save_seurat <- function(sobj, dir_path = getwd(), name= "scdata", compression = 
 
     # Write assay metadata
     write_dataframe(df = sobj[[assay]]@meta.data, path = paste(assay_path, "assay_metadata", sep ='/'),
-                    compression = compression, compression_level = compression_level)
+                    name_of_rows = "gene_names", compression, compression_level)
 
   }
 
@@ -233,17 +226,6 @@ load_seurat <- function(dir_path) {
   cell_metadata$cell_names <- NULL
 
 
-  #### Variable Features ----
-  subdir_path <- paste(dir_path, "variable_features", sep = '/')
-
-  variable_features <- NULL
-  if (file.exists(subdir_path)) { # Load if it exists
-    variable_features <- load_feather(subdir_path)
-
-    variable_features <- variable_features$variable_features # Return as vector of strings
-  }
-
-
   ### Assays ----
   message("Reading in assays...")
   subdir_path <- paste(dir_path, "assays", sep='/')
@@ -280,9 +262,14 @@ load_seurat <- function(dir_path) {
       assay_tmp[[assay]][[layer]] <- data
     }
 
+
     #### Assay Metadata ----
     # Load metadata
     data <- load_feather(paste(assay_path, "assay_metadata", sep = '/'))
+
+    # Get rid of gene_names column
+    rownames(data) <- data$gene_names
+    data$gene_names <- NULL; gc()
 
     # Append metadata to list
     assay_md_tmp[[assay]] <- data
@@ -339,9 +326,6 @@ load_seurat <- function(dir_path) {
 
   # Add cell metadata
   sobj[[]] <- cell_metadata
-
-  # Add variable features
-  Seurat::VariableFeatures(sobj) <- variable_features
 
   # Add other assays(if there are others)
   if (length(assay_tmp) != 0) {
